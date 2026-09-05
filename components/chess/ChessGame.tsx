@@ -1,7 +1,7 @@
 'use client';
 /* oxlint-disable next/no-img-element -- Small pre-sized local alpha sprites are reused across the board without an image service. */
-import Link from 'next/link';
-import {useCallback,useEffect,useRef,useState} from 'react';
+
+import {useCallback,useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import {Chess,type Square,type Move,type PieceSymbol,type Color} from 'chess.js';
 import {ArrowDownUp,Plus,Users,Monitor,ChevronRight,Flag,BookOpen,RotateCcw,Zap} from 'lucide-react';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
@@ -10,7 +10,11 @@ import {characters,pieceImage,colorName} from '@/lib/chess/characters';
 import {chooseCpuMove,gameResult} from '@/lib/chess/engine';
 import Board from './Board';
 type Mode='cpu'|'local';
+const subscribeReady=()=>()=>{};
+const clientReady=()=>true;
+const serverReady=()=>false;
 export default function ChessGame(){
+ const ready=useSyncExternalStore(subscribeReady,clientReady,serverReady);
  const [game,setGame]=useState(()=>new Chess());
  const [revision,setRevision]=useState(0),[started,setStarted]=useState(false),[mode,setMode]=useState<Mode>('cpu'),[draftMode,setDraftMode]=useState<Mode>('cpu');
  const [selected,setSelected]=useState<Square|null>(null),[flipped,setFlipped]=useState(false),[last,setLast]=useState<Move|null>(null),[capture,setCapture]=useState<Square|null>(null);
@@ -51,9 +55,9 @@ export default function ChessGame(){
  const setup=<><p className="eyebrow">対局の準備</p><h2>猫たちの一局を、<br/>はじめましょう。</h2><RadioGroup value={draftMode} onValueChange={v=>setDraftMode(v as Mode)} className="mode-options" aria-label="対戦モード">
   <label htmlFor="mode-cpu" className={draftMode==='cpu'?'chosen':''}><RadioGroupItem id="mode-cpu" value="cpu"/><Monitor size={20}/><span><strong>CPUと対戦</strong><small>あなたは白の駒 · 初級</small></span></label>
   <label htmlFor="mode-local" className={draftMode==='local'?'chosen':''}><RadioGroupItem id="mode-local" value="local"/><Users size={20}/><span><strong>ふたりで対戦</strong><small>同じ端末で交互に操作</small></span></label>
- </RadioGroup><button className="primary-button" onClick={start}>対局をはじめる<ChevronRight size={18}/></button><p className="setup-note">時間制限なし。白の駒から始まります。</p></>;
+ </RadioGroup><button className="primary-button" disabled={!ready} onClick={start}>{ready?'対局をはじめる':'読み込み中…'}<ChevronRight size={18}/></button><p className="setup-note">時間制限なし。白の駒から始まります。</p></>;
  return <main className="chess-app">
-  <header className="site-header"><Link href="/" className="wordmark" aria-label="THUNDER PAW CHESS ホーム"><span className="brand-icon"><Zap size={21} fill="currentColor"/></span><span>THUNDER PAW <b>CHESS</b></span></Link><button className="quiet-button" onClick={()=>setDialog('rules')}><BookOpen size={17}/><span>遊び方</span></button></header>
+  <header className="site-header"><div className="wordmark" aria-label="THUNDER PAW CHESS"><span className="brand-icon"><Zap size={21} fill="currentColor"/></span><span>THUNDER PAW <b>CHESS</b></span></div><button className="quiet-button" onClick={()=>setDialog('rules')}><BookOpen size={17}/><span>遊び方</span></button></header>
   <div className="game-layout"><section className="play-area" aria-label="対局エリア"><div className="board-heading"><h1>猫たちのチェス盤</h1><span>{started?(mode==='cpu'?'CPU対戦 · 初級':'ふたりで対戦'):'対局前'}</span></div>
    {player(flipped?'w':'b')}
    <div className="board-frame"><Board game={game} selected={selected} legal={legal} last={last} flipped={flipped} onSquare={select} capture={capture} disabled={!started||!!result||thinking||!!promotion}/></div>
@@ -76,3 +80,5 @@ export default function ChessGame(){
   </DialogContent></Dialog>
  </main>;
 }
+
+
