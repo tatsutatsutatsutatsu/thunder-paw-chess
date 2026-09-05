@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {test} from 'node:test';
+import {Chess} from 'chess.js';
+import {chooseCpuMove,gameResult} from '../lib/chess/engine.ts';
+test('initial 32 pieces, both sides move and capture',()=>{const g=new Chess();assert.equal(g.board().flat().filter(Boolean).length,32);assert.equal(g.moves().length,20);g.move('e4');g.move('d5');const m=g.move('exd5');assert.equal(m.captured,'p');assert.equal(g.board().flat().filter(Boolean).length,31);assert.equal(g.turn(),'b');});
+test('castling both sides moves rook too',()=>{for(const [san,king,rook] of [['O-O','g1','f1'],['O-O-O','c1','d1']]){const g=new Chess('r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1');g.move(san);assert.equal(g.get(king).type,'k');assert.equal(g.get(rook).type,'r');}});
+test('castling through check prohibited',()=>{const g=new Chess('r3k2r/8/8/8/8/5r2/8/R3K2R w KQkq - 0 1');assert(!g.moves().includes('O-O'));});
+test('en passant capture and expiration',()=>{const g=new Chess();['e4','a6','e5','d5'].forEach(m=>g.move(m));const m=g.move('exd6');assert.equal(m.flags,'e');assert.equal(g.get('d5'),undefined);const h=new Chess();['e4','a6','e5','d5','Nf3','a5'].forEach(m=>h.move(m));assert(!h.moves().includes('exd6'));});
+test('all four promotions for either color',()=>{for(const color of ['w','b'])for(const p of ['q','r','b','n']){const g=new Chess(color==='w'?'7k/P7/8/8/8/8/8/7K w - - 0 1':'7k/8/8/8/8/8/p7/7K b - - 0 1');g.move({from:color==='w'?'a7':'a2',to:color==='w'?'a8':'a1',promotion:p});assert.equal(g.get(color==='w'?'a8':'a1').type,p);}});
+test('pinned piece cannot expose king',()=>{const g=new Chess('4r1k1/8/8/8/8/8/4R3/4K3 w - - 0 1');assert(!g.moves({square:'e2',verbose:true}).some(m=>m.to==='d2'));});
+test('checkmate with both kings still on board',()=>{const g=new Chess();['f3','e5','g4','Qh4#'].forEach(m=>g.move(m));assert.match(gameResult(g),/黒の勝ち/);assert.equal(g.moves().length,0);assert.equal(g.board().flat().filter(p=>p?.type==='k').length,2);});
+test('stalemate, insufficient material, 50 move draw',()=>{assert.match(gameResult(new Chess('7k/5Q2/6K1/8/8/8/8/8 b - - 0 1')),/ステイルメイト/);assert.match(gameResult(new Chess('7k/8/8/8/8/8/8/7K w - - 0 1')),/戦力不足/);assert.match(gameResult(new Chess('7k/8/8/8/8/8/R7/7K w - - 100 51')),/50手/);});
+test('threefold repetition preserves history',()=>{const g=new Chess();['Nf3','Nf6','Ng1','Ng8','Nf3','Nf6','Ng1','Ng8'].forEach(m=>g.move(m));assert.match(gameResult(g),/3回/);});
+test('CPU replies legally and does not corrupt history',()=>{const g=new Chess();g.move('e4');const before=g.fen(),history=g.pgn();const move=chooseCpuMove(g);assert.equal(g.fen(),before);assert.equal(g.pgn(),history);assert(move);g.move(move);assert.equal(g.turn(),'w');});
+test('CPU takes mate in one and stops at game over',()=>{const g=new Chess('7k/8/5KQ1/8/8/8/8/8 w - - 0 1');g.move(chooseCpuMove(g));assert(g.isCheckmate());assert.equal(chooseCpuMove(g),null);});

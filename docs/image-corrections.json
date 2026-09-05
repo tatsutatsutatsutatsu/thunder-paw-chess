@@ -1,0 +1,32 @@
+[
+  {
+    "name": "queen",
+    "path": "C:\\Users\\USER\\.codex\\generated_images\\01a071bc-795c-7bb3-9c45-74f0bcf83066\\exec-7534b7ed-1028-4bec-9b97-f9354c4415ac.png",
+    "prompt": "Use case: background-extraction. Edit target is the supplied queen sprite pair. Remove the ENTIRE white and gray checkerboard background. It is unwanted image content. Return two isolated figurines on a genuinely transparent background with actual alpha channel zero surrounding objects, not a drawing of transparency and not a solid white or gray canvas. Do not paint a checkerboard. Keep both characters exactly unchanged, same pose, scale, colors, facial details, accessories and bases. Recolor the RIGHT character's pedestal charcoal to match its body, leaving the LEFT pedestal ivory. No text or extra objects."
+  },
+  {
+    "name": "king",
+    "path": "C:\\Users\\USER\\.codex\\generated_images\\01a071bc-795c-7bb3-9c45-74f0bcf83066\\exec-b72effe3-b553-4187-a131-7a791b50eb1d.png",
+    "prompt": "Use case: background-extraction. Edit target is the supplied king sprite pair. Remove the ENTIRE white and gray checkerboard background. It is unwanted image content. Return two isolated figurines on a genuinely transparent background with actual alpha channel zero surrounding objects, not a drawing of transparency and not a solid white or gray canvas. Do not paint a checkerboard. Keep both characters exactly unchanged, same pose, scale, colors, facial details, accessories and bases. No text or extra objects."
+  },
+  {
+    "name": "knight",
+    "path": "C:\\Users\\USER\\.codex\\generated_images\\01a071bc-795c-7bb3-9c45-74f0bcf83066\\exec-bae4b701-d75a-4a64-9e94-fc952ab8ffa8.png",
+    "prompt": "Use case: background-extraction. Edit target is the supplied knight sprite pair. Remove the ENTIRE white and gray checkerboard background. It is unwanted image content. Return two isolated figurines on a genuinely transparent background with actual alpha channel zero surrounding objects, not a drawing of transparency and not a solid white or gray canvas. Do not paint a checkerboard. Keep both characters exactly unchanged, same pose, scale, colors, facial details, accessories and bases. Also remove the four-point sparkle shapes by the outer lower leg of each figurine; these are watermark remnants. Preserve the actual legs and tail. No text or extra objects."
+  },
+  {
+    "name": "rook",
+    "path": "C:\\Users\\USER\\.codex\\generated_images\\01a071bc-795c-7bb3-9c45-74f0bcf83066\\exec-878554f0-ccc7-42ad-9410-abd80d35406d.png",
+    "prompt": "Use case: background-extraction. Edit target is the supplied rook sprite pair. Remove the ENTIRE white and gray checkerboard background. It is unwanted image content. Return two isolated figurines on a genuinely transparent background with actual alpha channel zero surrounding objects, not a drawing of transparency and not a solid white or gray canvas. Do not paint a checkerboard. Keep both characters exactly unchanged, same pose, scale, colors, facial details, accessories and bases. No text or extra objects."
+  },
+  {
+    "name": "pawn",
+    "path": "C:\\Users\\USER\\.codex\\generated_images\\01a071bc-795c-7bb3-9c45-74f0bcf83066\\exec-25c18574-e2bb-49e7-977f-546537f386ae.png",
+    "prompt": "Use case: background-extraction. Edit target is the supplied pawn sprite pair. Remove the ENTIRE white and gray checkerboard background. It is unwanted image content. Return two isolated figurines on a genuinely transparent background with actual alpha channel zero surrounding objects, not a drawing of transparency and not a solid white or gray canvas. Do not paint a checkerboard. Keep both characters exactly unchanged, same pose, scale, colors, facial details, accessories and bases. No text or extra objects."
+  },
+  {
+    "name": "bishop",
+    "path": "C:\\Users\\USER\\.codex\\generated_images\\01a071bc-795c-7bb3-9c45-74f0bcf83066\\exec-664ff278-3320-4549-a8c6-d2f588483773.png",
+    "prompt": "Use case: background-extraction. Edit target is the supplied bishop sprite pair. Remove the ENTIRE white and gray checkerboard background. It is unwanted image content. Return two isolated figurines on a genuinely transparent background with actual alpha channel zero surrounding objects, not a drawing of transparency and not a solid white or gray canvas. Do not paint a checkerboard. Keep both characters exactly unchanged, same pose, scale, colors, facial details, accessories and bases. No text or extra objects."
+  }
+]
