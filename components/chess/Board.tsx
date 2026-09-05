@@ -1,4 +1,5 @@
 'use client';
+/* oxlint-disable next/no-img-element -- Pre-sized local alpha sprites are intentionally rendered directly. */
 import {useRef,useLayoutEffect,type CSSProperties} from 'react';
 import type {Chess,Square,Move} from 'chess.js';
 import {characters,colorName,pieceImage} from '@/lib/chess/characters';
@@ -13,8 +14,8 @@ export default function Board({game,selected,legal,last,flipped,onSquare,capture
    const a=position(from,flipped),b=position(to,flipped),el=root.current?.querySelector(`[data-piece="${to}"]`);
    if(el)el.animate([{transform:`translate(${(a.x-b.x)/11*100}%, ${(a.y-b.y)/12*100}%)`},{transform:'translate(0,0)'}],{duration:230,easing:'cubic-bezier(.2,.7,.3,1)'});
   };animate(last.from,last.to);
-  if(last.flags.includes('k'))animate(`h${last.from[1]}` as Square,`f${last.from[1]}` as Square);
-  if(last.flags.includes('q'))animate(`a${last.from[1]}` as Square,`d${last.from[1]}` as Square);
+  if(last.isKingsideCastle())animate(`h${last.from[1]}` as Square,`f${last.from[1]}` as Square);
+  if(last.isQueensideCastle())animate(`a${last.from[1]}` as Square,`d${last.from[1]}` as Square);
  },[last,flipped]);
  return <div className="board" ref={root} aria-label="チェス盤">
   <svg className="board-stone" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">

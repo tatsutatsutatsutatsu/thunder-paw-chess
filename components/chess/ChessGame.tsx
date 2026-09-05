@@ -1,4 +1,6 @@
 'use client';
+/* oxlint-disable next/no-img-element -- Small pre-sized local alpha sprites are reused across the board without an image service. */
+import Link from 'next/link';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {Chess,type Square,type Move,type PieceSymbol,type Color} from 'chess.js';
 import {ArrowDownUp,Plus,Users,Monitor,ChevronRight,Flag,BookOpen,RotateCcw,Zap} from 'lucide-react';
@@ -9,27 +11,28 @@ import {chooseCpuMove,gameResult} from '@/lib/chess/engine';
 import Board from './Board';
 type Mode='cpu'|'local';
 export default function ChessGame(){
- const gameRef=useRef(new Chess());const game=gameRef.current;
+ const [game,setGame]=useState(()=>new Chess());
  const [revision,setRevision]=useState(0),[started,setStarted]=useState(false),[mode,setMode]=useState<Mode>('cpu'),[draftMode,setDraftMode]=useState<Mode>('cpu');
  const [selected,setSelected]=useState<Square|null>(null),[flipped,setFlipped]=useState(false),[last,setLast]=useState<Move|null>(null),[capture,setCapture]=useState<Square|null>(null);
  const [promotion,setPromotion]=useState<{from:Square;to:Square}|null>(null),[dialog,setDialog]=useState<'new'|'rules'|'draw'|null>(null),[agreedDraw,setAgreedDraw]=useState(false);
- const [thinking,setThinking]=useState(false),[notice,setNotice]=useState('');
+ const [notice,setNotice]=useState('');
  const history=game.history({verbose:true});const result=agreedDraw?'引き分け — 両者の合意':gameResult(game);
+ const thinking=started&&mode==='cpu'&&game.turn()==='b'&&!result&&dialog!=='new';
  const legal=selected?game.moves({square:selected,verbose:true}).map(m=>m.to):[];
  const selectedPiece=selected?game.get(selected):null;
  const moveLog=useRef<HTMLDivElement>(null);
  const makeMove=useCallback((move:{from:Square;to:Square;promotion?:string})=>{
-  try{const m=gameRef.current.move(move);setLast(m);setSelected(null);setPromotion(null);setNotice('');setCapture(m.captured?m.to:null);setRevision(r=>r+1);}catch{setNotice('そのマスには移動できません。');}
- },[]);
+  try{const next=new Chess();next.loadPgn(game.pgn());const m=next.move(move);setGame(next);setLast(m);setSelected(null);setPromotion(null);setNotice('');setCapture(m.captured?m.to:null);setRevision(r=>r+1);}catch{setNotice('そのマスには移動できません。');}
+ },[game]);
  useEffect(()=>{if(!capture)return;const t=setTimeout(()=>setCapture(null),650);return()=>clearTimeout(t);},[capture,revision]);
  useEffect(()=>{
-  if(!started||mode!=='cpu'||game.turn()!=='b'||result||dialog==='new'){setThinking(false);return;}
-  setThinking(true);let cancelled=false;
-  const timer=setTimeout(()=>{try{const isolated=new Chess();isolated.loadPgn(game.pgn());const m=chooseCpuMove(isolated);if(!cancelled&&m)makeMove(m);}finally{if(!cancelled)setThinking(false);}},420);
+  if(!thinking)return;
+  let cancelled=false;
+  const timer=setTimeout(()=>{const isolated=new Chess();isolated.loadPgn(game.pgn());const m=chooseCpuMove(isolated);if(!cancelled&&m)makeMove(m);},420);
   return()=>{cancelled=true;clearTimeout(timer);};
- },[revision,started,mode,result,dialog,game,makeMove]);
+ },[thinking,game,makeMove]);
  useEffect(()=>{if(moveLog.current)moveLog.current.scrollTop=moveLog.current.scrollHeight;},[revision]);
- function start(){gameRef.current=new Chess();setMode(draftMode);setStarted(true);setSelected(null);setLast(null);setCapture(null);setPromotion(null);setAgreedDraw(false);setNotice('');setDialog(null);setThinking(false);setRevision(r=>r+1);}
+ function start(){setGame(new Chess());setMode(draftMode);setStarted(true);setSelected(null);setLast(null);setCapture(null);setPromotion(null);setAgreedDraw(false);setNotice('');setDialog(null);setRevision(r=>r+1);}
  function select(square:Square){
   if(!started||result||promotion||thinking||(mode==='cpu'&&game.turn()==='b'))return;
   const p=game.get(square);
@@ -46,11 +49,11 @@ export default function ChessGame(){
   {active&&<span className="turn-pill">{thinking?'考え中':'手番'}</span>}
  </div>;}
  const setup=<><p className="eyebrow">対局の準備</p><h2>猫たちの一局を、<br/>はじめましょう。</h2><RadioGroup value={draftMode} onValueChange={v=>setDraftMode(v as Mode)} className="mode-options" aria-label="対戦モード">
-  <label className={draftMode==='cpu'?'chosen':''}><RadioGroupItem value="cpu"/><Monitor size={20}/><span><strong>CPUと対戦</strong><small>あなたは白の駒 · 初級</small></span></label>
-  <label className={draftMode==='local'?'chosen':''}><RadioGroupItem value="local"/><Users size={20}/><span><strong>ふたりで対戦</strong><small>同じ端末で交互に操作</small></span></label>
+  <label htmlFor="mode-cpu" className={draftMode==='cpu'?'chosen':''}><RadioGroupItem id="mode-cpu" value="cpu"/><Monitor size={20}/><span><strong>CPUと対戦</strong><small>あなたは白の駒 · 初級</small></span></label>
+  <label htmlFor="mode-local" className={draftMode==='local'?'chosen':''}><RadioGroupItem id="mode-local" value="local"/><Users size={20}/><span><strong>ふたりで対戦</strong><small>同じ端末で交互に操作</small></span></label>
  </RadioGroup><button className="primary-button" onClick={start}>対局をはじめる<ChevronRight size={18}/></button><p className="setup-note">時間制限なし。白の駒から始まります。</p></>;
  return <main className="chess-app">
-  <header className="site-header"><a href="/" className="wordmark" aria-label="THUNDER PAW CHESS ホーム"><span className="brand-icon"><Zap size={21} fill="currentColor"/></span><span>THUNDER PAW <b>CHESS</b></span></a><button className="quiet-button" onClick={()=>setDialog('rules')}><BookOpen size={17}/><span>遊び方</span></button></header>
+  <header className="site-header"><Link href="/" className="wordmark" aria-label="THUNDER PAW CHESS ホーム"><span className="brand-icon"><Zap size={21} fill="currentColor"/></span><span>THUNDER PAW <b>CHESS</b></span></Link><button className="quiet-button" onClick={()=>setDialog('rules')}><BookOpen size={17}/><span>遊び方</span></button></header>
   <div className="game-layout"><section className="play-area" aria-label="対局エリア"><div className="board-heading"><h1>猫たちのチェス盤</h1><span>{started?(mode==='cpu'?'CPU対戦 · 初級':'ふたりで対戦'):'対局前'}</span></div>
    {player(flipped?'w':'b')}
    <div className="board-frame"><Board game={game} selected={selected} legal={legal} last={last} flipped={flipped} onSquare={select} capture={capture} disabled={!started||!!result||thinking||!!promotion}/></div>

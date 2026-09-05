@@ -53,3 +53,6 @@ npx tsc --noEmit
 - 画像はAI加工の2D素材であり、厳密な3Dモデルではありません。
 
 ルール判定: chess.js 1.4.0 https://github.com/jhlywa/chess.js
+
+補足: 追加実装の範囲に対するlintとTypeScript型検査は通過しています。スターター付属の未使用UI部品には既存のlint指摘があり、全体lintはそれらで失敗します。
+
