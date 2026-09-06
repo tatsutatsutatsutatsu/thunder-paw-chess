@@ -1,12 +1,13 @@
 import * as T from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { createFigurineLibrary } from './figurines';
+import { createFigurineLibrary, opponentFacing } from './figurines';
+import { createRoomBackdrop } from './environment';
 import type { Chess, Square, Move } from 'chess.js';
 export type BoardState={game:Chess;selected:Square|null;legal:Square[];last:Move|null;flipped:boolean;disabled:boolean};
 export const squarePosition=(s:Square)=>new T.Vector3(s.charCodeAt(0)-100.5,.035,4.5-Number(s[1]));
 export function createChessScene(host:HTMLDivElement,onSquare:(s:Square)=>void,onFailure:()=>void){
- const scene=new T.Scene();scene.background=new T.Color('#e9e4d9');
+ const scene=new T.Scene();scene.background=new T.Color('#d8ceba');scene.fog=new T.Fog('#d8ceba',32,65);
  const camera=new T.OrthographicCamera(-5,5,5,-5,.1,70);
  const renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
  renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.75));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=.98;
@@ -25,7 +26,7 @@ export function createChessScene(host:HTMLDivElement,onSquare:(s:Square)=>void,o
  // Coordinate lettering is part of the board, visible from any camera angle.
  function label(text:string,x:number,z:number,rotation=0){const c=document.createElement('canvas');c.width=c.height=64;const ctx=c.getContext('2d')!;ctx.clearRect(0,0,64,64);ctx.font='40px Georgia';ctx.fillStyle='#534833';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,32,32);const texture=new T.CanvasTexture(c);textures.push(texture);const material=new T.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false});materials.push(material);const o=mesh(new T.PlaneGeometry(.19,.19),material,x,.022,z);o.rotation.set(-Math.PI/2,0,rotation);}
  for(let i=0;i<8;i++){label('abcdefgh'[i],i-3.5,4.15);label('abcdefgh'[i],i-3.5,-4.15,Math.PI);label(String(8-i),-4.15,i-3.5,-Math.PI/2);label(String(8-i),4.15,i-3.5,Math.PI/2);}
- const ground=mesh(new T.PlaneGeometry(200,200),mat('#e9e4d9'),0,-.41,0,scene);ground.rotation.x=-Math.PI/2;
+ const room=createRoomBackdrop();scene.add(room.group);
  scene.add(new T.HemisphereLight('#fff5df','#888d86',1.8));
  const sun=new T.DirectionalLight('#fff1d4',2.2);sun.position.set(-4,10,6);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-6;sun.shadow.camera.right=6;sun.shadow.camera.top=6;sun.shadow.camera.bottom=-6;sun.shadow.normalBias=.045;sun.shadow.bias=-.0003;sun.shadow.radius=3;scene.add(sun);
  const fill=new T.DirectionalLight('#dfe8f6',1.3);fill.position.set(5,5,-4);scene.add(fill);
@@ -52,7 +53,7 @@ export function createChessScene(host:HTMLDivElement,onSquare:(s:Square)=>void,o
    for(const row of next.game.board())for(const p of row)if(p){
     const source=transfers.get(p.square)||p.square;let figure=pieces.get(source);if(figure?.userData.kind!==p.type||figure?.userData.color!==p.color)figure=undefined;
     if(figure)pieces.delete(source);else figure=library.create(p.type,p.color);
-    figure.userData.square=p.square;figure.rotation.y=flipped?Math.PI:0;
+    figure.userData.square=p.square;figure.rotation.y=opponentFacing(p.color);
     const to=squarePosition(p.square);
     if(isMove&&source!==p.square&&!reduced){const from=squarePosition(source);figure.position.copy(from);animations.push({piece:figure,from,to,start:performance.now()});}else figure.position.copy(to);
     figures.add(figure);newPieces.set(p.square,figure);
@@ -61,7 +62,7 @@ export function createChessScene(host:HTMLDivElement,onSquare:(s:Square)=>void,o
    if(isMove&&next.last!.captured)emitSparks(next.last!.to);
    fen=nextFen;lastKey=key;
   }
-  for(const figure of pieces.values())figure.rotation.y=flipped?Math.PI:0;
+  // The flip control changes only the camera. Both armies continue facing each other.
   highlights.clear();if(next.last){mark(next.last.from,tileGeometry,recentMaterial);mark(next.last.to,tileGeometry,recentMaterial);}
   if(next.selected)mark(next.selected,ringGeometry,selectionMaterial);
   next.legal.forEach(s=>mark(s,next.game.get(s)?ringGeometry:dotGeometry,dotMaterial));
@@ -83,8 +84,9 @@ export function createChessScene(host:HTMLDivElement,onSquare:(s:Square)=>void,o
    host.querySelectorAll<HTMLButtonElement>('[data-square]').forEach(b=>{const s=b.dataset.square as Square;projected.copy(squarePosition(s));projected.y=state?.game.get(s)?.type==='p'?.65:state?.game.get(s)?.type?.72:.045;projected.project(camera);b.style.left=`${(projected.x+1)*50}%`;b.style.top=`${(1-projected.y)*50}%`;});dirty=false;}
  }
  render();
- return{update,resetView,zoom:(delta:number)=>{camera.zoom=T.MathUtils.clamp(camera.zoom+delta,.8,2.3);camera.updateProjectionMatrix();dirty=true;},dispose:()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();renderer.domElement.removeEventListener('pointerdown',onDown);renderer.domElement.removeEventListener('pointerup',onUp);renderer.domElement.removeEventListener('pointercancel',onCancel);renderer.domElement.removeEventListener('webglcontextlost',lost);if(sparks){sparks.points.geometry.dispose();(sparks.points.material as T.Material).dispose();}library.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());renderer.dispose();renderer.domElement.remove();}};
+ return{update,resetView,zoom:(delta:number)=>{camera.zoom=T.MathUtils.clamp(camera.zoom+delta,.8,2.3);camera.updateProjectionMatrix();dirty=true;},dispose:()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();renderer.domElement.removeEventListener('pointerdown',onDown);renderer.domElement.removeEventListener('pointerup',onUp);renderer.domElement.removeEventListener('pointercancel',onCancel);renderer.domElement.removeEventListener('webglcontextlost',lost);if(sparks){sparks.points.geometry.dispose();(sparks.points.material as T.Material).dispose();}room.dispose();library.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());renderer.dispose();renderer.domElement.remove();}};
 }
+
 
 
 

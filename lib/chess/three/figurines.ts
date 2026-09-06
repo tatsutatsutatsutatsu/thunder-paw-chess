@@ -3,6 +3,9 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import type { Color, PieceSymbol } from 'chess.js';
 
+/** White advances toward -Z; black advances toward +Z, regardless of camera. */
+export const opponentFacing = (color:Color) => color==='w' ? Math.PI : 0;
+
 /** Real volumetric figurines. No planes, image billboards or reference-image textures. */
 export function createFigurineLibrary() {
  const noise=new Uint8Array(64*64*4);let seed=19;
@@ -13,8 +16,9 @@ export function createFigurineLibrary() {
   charcoal:new T.MeshStandardMaterial({color:'#373d39',roughness:.72,bumpMap:grain,bumpScale:.009}),
   gold:new T.MeshStandardMaterial({color:'#c5a052',metalness:.7,roughness:.32}),
   antique:new T.MeshStandardMaterial({color:'#ad8846',metalness:.64,roughness:.4}),
-  ink:new T.MeshStandardMaterial({color:'#24251f',roughness:.48}),
+  ink:new T.MeshStandardMaterial({color:'#51483d',roughness:.88}),
   cream:new T.MeshStandardMaterial({color:'#f0e5ca',roughness:.62}),
+  darkEye:new T.MeshStandardMaterial({color:'#c3c0a9',roughness:.86}),
  };
  const library=new Map<string,T.Group>();
  function build(type:PieceSymbol,color:Color){
@@ -56,20 +60,24 @@ export function createFigurineLibrary() {
   // A curled, raised tail is visible when orbiting behind the collection.
   const tailCurve=new T.CatmullRomCurve3([new T.Vector3(.12,.31+lift,-.09),new T.Vector3(.27,.31+lift,-.18),new T.Vector3(.29,.46+lift,-.19),new T.Vector3(.24,.49+lift,-.19)]);
   add(new T.TubeGeometry(tailCurve,16,.034,8,false),body);
-  ball(body,0,headY,0,.302,.282,.258);
+  ball(body,0,headY,0,.316,.278,.27);
   for(const x of [-.205,.205]){
-   add(new T.ConeGeometry(.135,.235,3),body,x,headY+.228,-.008,[1,1,.72],[0,Math.PI/2,x<0?.25:-.25]);
-   shape(gold,[[-.069,0],[.071,0],[0,.132]],x,headY+.178,.064,1,.016);
+   // Rounded triangular ears with a small inset, rather than angular spikes.
+   const ear=new T.Shape();ear.moveTo(-.095,0);ear.quadraticCurveTo(-.09,.08,-.025,.172);ear.quadraticCurveTo(0,.205,.025,.172);ear.quadraticCurveTo(.09,.08,.095,0);ear.quadraticCurveTo(0,-.035,-.095,0);
+   add(new T.ExtrudeGeometry(ear,{depth:.09,bevelEnabled:true,bevelThickness:.025,bevelSize:.021,bevelSegments:4,steps:1}),body,x,headY+.165,-.043,[1,1,1],[0,0,x<0?.24:-.24]);
+   shape(gold,[[-.04,.018],[.04,.018],[0,.112]],x,headY+.183,.07,1,.008);
   }
-  // Eye rings and actual inlaid round/X geometry sit on the curved face.
-  for(const x of [-.115,.115]){
-   ball(cream,x,headY+.005,.23,.087,.096,.033);
-   ring(ink,x,headY+.005,.258,.073,.011);
+  // Small matte inlays follow the head surface. No protruding eyeballs or dark sockets.
+  function inlay(g:T.BufferGeometry,m:T.Material,x:number,y:number,offset:number){
+   const p=g.getAttribute('position');for(let i=0;i<p.count;i++){const px=p.getX(i)+x,py=p.getY(i)+y;p.setXYZ(i,px,headY+py,.27*Math.sqrt(Math.max(.1,1-(px/.316)**2-(py/.278)**2))+offset);}
+   g.computeVertexNormals();add(g,m);
   }
-  ball(ink,-.115,headY+.005,.263,.055,.064,.019);
-  ball(cream,-.132,headY+.034,.281,.012);
-  line(ink,[.078,headY-.034,.274],[.152,headY+.044,.274],.012);
-  line(ink,[.078,headY+.044,.274],[.152,headY-.034,.274],.012);
+  const eyeGround=dark?materials.darkEye:cream;
+  for(const x of [-.112,.112])inlay(new T.CircleGeometry(.066,40),eyeGround,x,-.017,.003);
+  inlay(new T.RingGeometry(.063,.066,40),gold,.112,-.017,.005);
+  inlay(new T.CircleGeometry(.046,40),ink,-.112,-.017,.005);
+  inlay(new T.CircleGeometry(.011,20),cream,-.128,.002,.007);
+  for(const angle of [-Math.PI/4,Math.PI/4]){const stroke=new T.Shape();stroke.moveTo(-.005,-.04);stroke.quadraticCurveTo(-.011,-.049,0,-.049);stroke.quadraticCurveTo(.011,-.049,.005,-.04);stroke.lineTo(.005,.04);stroke.quadraticCurveTo(.011,.049,0,.049);stroke.quadraticCurveTo(-.011,.049,-.005,.04);stroke.closePath();const g=new T.ShapeGeometry(stroke,10);g.rotateZ(angle);inlay(g,ink,.112,-.017,.006);}
   bolt(0,headY+.166,.23,.48);
   const armY=.47+lift;
   for(const x of [-.225,.225])ball(body,x,armY,.025,.075,.165,.08);
@@ -118,7 +126,7 @@ export function createFigurineLibrary() {
    for(let i=0;i<5;i++)ball(gold,.04,headY+.425-i*.058,-.135,.048,.045,.028);
   }
   const group=new T.Group();group.name=`${color}-${type}`;
-  for(const [material,geometries] of parts){const merged=mergeGeometries(geometries);geometries.forEach(g=>g.dispose());if(!merged)throw Error('Unable to merge figurine geometry');merged.computeBoundingSphere();const mesh=new T.Mesh(merged,material);mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);}
+  for(const [material,geometries] of parts){const merged=mergeGeometries(geometries);geometries.forEach(g=>g.dispose());if(!merged)throw Error('Unable to merge figurine geometry');merged.computeBoundingSphere();const mesh=new T.Mesh(merged,material);mesh.castShadow=material!==ink&&material!==cream&&material!==materials.darkEye;mesh.receiveShadow=true;group.add(mesh);}
   const size=type==='p'?.76:type==='r'?.87:type==='k'?.9:.9;group.scale.setScalar(size);
   group.userData.kind=type;group.userData.color=color;return group;
  }
