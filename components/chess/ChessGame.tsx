@@ -60,6 +60,7 @@ export default function ChessGame(){
   <header className="site-header"><div className="wordmark" aria-label="THUNDER PAW CHESS"><span className="brand-icon"><Zap size={21} fill="currentColor"/></span><span>THUNDER PAW <b>CHESS</b></span></div><button className="quiet-button" onClick={()=>setDialog('rules')}><BookOpen size={17}/><span>遊び方</span></button></header>
   <div className="game-layout"><section className="play-area" aria-label="対局エリア"><div className="board-heading"><h1>猫たちのチェス盤</h1><span>{started?(mode==='cpu'?'CPU対戦 · 初級':'ふたりで対戦'):'対局前'}</span></div>
    {player(flipped?'w':'b')}
+   <output className={`board-info ${game.isCheck()&&!result?'checked':''}`} aria-live="polite"><strong>{!started?'白の駒からスタート':result||`${colorName(game.turn())}の番${thinking?' · 考え中':game.isCheck()?' · チェック！':''}`}</strong><span>{selectedPiece?`${characters[selectedPiece.type].name} · ${selected}`:started&&!result?'駒を選んで移動先をタップ':'モードを選んで対局開始'}</span></output>
    <div className="board-frame"><Board game={game} selected={selected} legal={legal} last={last} flipped={flipped} onSquare={select} capture={capture} disabled={!started||!!result||thinking||!!promotion}/></div>
    {player(flipped?'b':'w')}
    <div className="board-toolbar"><span><i className="legend-dot"/>移動できるマス</span><button onClick={()=>setFlipped(v=>!v)} className="quiet-button"><ArrowDownUp size={17}/>盤面を反転</button></div>
@@ -80,6 +81,7 @@ export default function ChessGame(){
   </DialogContent></Dialog>
  </main>;
 }
+
 
 
 

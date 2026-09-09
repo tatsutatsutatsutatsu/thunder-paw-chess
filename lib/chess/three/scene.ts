@@ -35,8 +35,8 @@ export function createChessScene(host:HTMLDivElement,onSquare:(s:Square)=>void,o
  const animations:{piece:T.Group;from:T.Vector3;to:T.Vector3;start:number}[]=[];
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  let sparks:{points:T.Points;start:number;origin:T.Vector3}|null=null;
- const selectionMaterial=new T.MeshBasicMaterial({color:'#f2c568',transparent:true,opacity:.92,depthWrite:false});const recentMaterial=new T.MeshBasicMaterial({color:'#e4c77a',transparent:true,opacity:.36,depthWrite:false});const checkMaterial=new T.MeshBasicMaterial({color:'#d55b43',transparent:true,opacity:.82,depthWrite:false});const dotMaterial=new T.MeshBasicMaterial({color:'#eac66e',transparent:true,opacity:.88,depthWrite:false});materials.push(selectionMaterial,recentMaterial,checkMaterial,dotMaterial);
- const ringGeometry=new T.RingGeometry(.38,.46,48),dotGeometry=new T.CircleGeometry(.1,24),tileGeometry=new T.PlaneGeometry(.94,.94);geometries.push(ringGeometry,dotGeometry,tileGeometry);
+ const selectionMaterial=new T.MeshBasicMaterial({color:'#f2c568',transparent:true,opacity:.92,depthWrite:false});const recentMaterial=new T.MeshBasicMaterial({color:'#e4c77a',transparent:true,opacity:.36,depthWrite:false});const checkMaterial=new T.MeshBasicMaterial({color:'#d55b43',transparent:true,opacity:.82,depthWrite:false});const dotMaterial=new T.MeshBasicMaterial({color:'#49341b',depthWrite:false});const dotEdgeMaterial=new T.MeshBasicMaterial({color:'#fff0c4',depthWrite:false});materials.push(selectionMaterial,recentMaterial,checkMaterial,dotMaterial,dotEdgeMaterial);
+ const ringGeometry=new T.RingGeometry(.38,.46,48),dotGeometry=new T.RingGeometry(.095,.19,32),dotEdgeGeometry=new T.RingGeometry(.19,.225,32),captureEdgeGeometry=new T.RingGeometry(.46,.49,48),tileGeometry=new T.PlaneGeometry(.94,.94);geometries.push(ringGeometry,dotGeometry,dotEdgeGeometry,captureEdgeGeometry,tileGeometry);
  function mark(square:Square,geometry:T.BufferGeometry,material:T.Material){const p=squarePosition(square),o=new T.Mesh(geometry,material);o.position.set(p.x,.035,p.z);o.rotation.x=-Math.PI/2;highlights.add(o);}
  function resetView(){camera.position.set(flipped?.5:-.5,16,flipped?-10.5:10.5);camera.zoom=1;camera.lookAt(controls.target);camera.updateProjectionMatrix();controls.update();dirty=true;}
  resetView();
@@ -65,7 +65,7 @@ export function createChessScene(host:HTMLDivElement,onSquare:(s:Square)=>void,o
   // The flip control changes only the camera. Both armies continue facing each other.
   highlights.clear();if(next.last){mark(next.last.from,tileGeometry,recentMaterial);mark(next.last.to,tileGeometry,recentMaterial);}
   if(next.selected)mark(next.selected,ringGeometry,selectionMaterial);
-  next.legal.forEach(s=>mark(s,next.game.get(s)?ringGeometry:dotGeometry,dotMaterial));
+  next.legal.forEach(s=>{const occupied=next.game.get(s);mark(s,occupied?ringGeometry:dotGeometry,dotMaterial);mark(s,occupied?captureEdgeGeometry:dotEdgeGeometry,dotEdgeMaterial);});
   if(next.game.isCheck())for(const row of next.game.board())for(const p of row)if(p?.type==='k'&&p.color===next.game.turn())mark(p.square,ringGeometry,checkMaterial);
   dirty=true;
  }
@@ -81,11 +81,16 @@ export function createChessScene(host:HTMLDivElement,onSquare:(s:Square)=>void,o
   if(sparks){const t=(now-sparks.start)/600;if(t>=1){scene.remove(sparks.points);sparks.points.geometry.dispose();(sparks.points.material as T.Material).dispose();sparks=null;}else{const p=sparks.points.geometry.getAttribute('position');for(let i=0;i<18;i++){const a=i*2.399;p.setXYZ(i,sparks.origin.x+Math.cos(a)*t*.65,sparks.origin.y+.15+Math.sin(t*Math.PI)*(.2+(i%4)*.08),sparks.origin.z+Math.sin(a)*t*.65);}p.needsUpdate=true;(sparks.points.material as T.PointsMaterial).opacity=1-t;}dirty=true;}
   if(dirty){renderer.render(scene,camera);host.dataset.zoom=String(camera.zoom);host.dataset.camera=camera.position.toArray().join(',');host.dataset.frustum=[camera.left,camera.right,camera.top,camera.bottom].join(',');host.dataset.meshes=String(renderer.info.render.calls);host.dataset.triangles=String(renderer.info.render.triangles);
    // Expose current projected square positions for keyboard focus indicators.
-   host.querySelectorAll<HTMLButtonElement>('[data-square]').forEach(b=>{const s=b.dataset.square as Square;projected.copy(squarePosition(s));projected.y=state?.game.get(s)?.type==='p'?.65:state?.game.get(s)?.type?.72:.045;projected.project(camera);b.style.left=`${(projected.x+1)*50}%`;b.style.top=`${(1-projected.y)*50}%`;});dirty=false;}
+   host.querySelectorAll<HTMLButtonElement>('[data-square]').forEach(b=>{const s=b.dataset.square as Square;projected.copy(squarePosition(s));projected.y=state?.game.get(s)?.type==='p'?.65:state?.game.get(s)?.type?.72:.045;projected.project(camera);b.style.left=`${(projected.x+1)*50}%`;b.style.top=`${(1-projected.y)*50}%`;});
+  // Keep readable base badges facing the viewer, including during moves and camera rotation.
+  host.querySelectorAll<HTMLElement>('[data-piece-label]').forEach(b=>{const figure=pieces.get(b.dataset.pieceLabel as Square);if(!figure)return;projected.copy(figure.position);projected.y=.07;projected.project(camera);b.style.left=`${(projected.x+1)*50}%`;b.style.top=`${(1-projected.y)*50}%`;});
+  dirty=false;}
  }
  render();
  return{update,resetView,zoom:(delta:number)=>{camera.zoom=T.MathUtils.clamp(camera.zoom+delta,.8,2.3);camera.updateProjectionMatrix();dirty=true;},dispose:()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();renderer.domElement.removeEventListener('pointerdown',onDown);renderer.domElement.removeEventListener('pointerup',onUp);renderer.domElement.removeEventListener('pointercancel',onCancel);renderer.domElement.removeEventListener('webglcontextlost',lost);if(sparks){sparks.points.geometry.dispose();(sparks.points.material as T.Material).dispose();}room.dispose();library.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());renderer.dispose();renderer.domElement.remove();}};
 }
+
+
 
 
 
