@@ -6,7 +6,7 @@ import { createRoomBackdrop } from './environment';
 import type { Chess, Square, Move } from 'chess.js';
 export type BoardState={game:Chess;selected:Square|null;legal:Square[];last:Move|null;flipped:boolean;disabled:boolean};
 export const squarePosition=(s:Square)=>new T.Vector3(s.charCodeAt(0)-100.5,.035,4.5-Number(s[1]));
-export function createChessScene(host:HTMLDivElement,onSquare:(s:Square)=>void,onFailure:()=>void){
+export function createChessScene(host:HTMLDivElement,onSquare:(s:Square)=>void,onFailure:()=>void,onCapture:(s:Square)=>void){
  const scene=new T.Scene();scene.background=new T.Color('#d8ceba');scene.fog=new T.Fog('#d8ceba',32,65);
  const camera=new T.OrthographicCamera(-5,5,5,-5,.1,70);
  const renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
@@ -34,6 +34,13 @@ export function createChessScene(host:HTMLDivElement,onSquare:(s:Square)=>void,o
  let pieces=new Map<Square,T.Group>();
  const animations:{piece:T.Group;from:T.Vector3;to:T.Vector3;start:number}[]=[];
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ let audioContext:AudioContext|null=null;
+ function unlockAudio(){try{audioContext??=new AudioContext();if(audioContext.state==='suspended')void audioContext.resume();}catch{/* Audio is optional when Web Audio is unavailable. */}}
+ function playCaptureSound(){unlockAudio();const context=audioContext;if(!context||context.state!=='running')return;const now=context.currentTime,master=context.createGain();master.gain.setValueAtTime(.0001,now);master.gain.exponentialRampToValueAtTime(.2,now+.012);master.gain.exponentialRampToValueAtTime(.0001,now+.32);master.connect(context.destination);
+  const impact=context.createOscillator();impact.type='triangle';impact.frequency.setValueAtTime(96,now);impact.frequency.exponentialRampToValueAtTime(38,now+.28);impact.connect(master);impact.start(now);impact.stop(now+.3);
+  const crack=context.createOscillator(),crackGain=context.createGain();crack.type='sawtooth';crack.frequency.setValueAtTime(1250,now);crack.frequency.exponentialRampToValueAtTime(170,now+.16);crackGain.gain.setValueAtTime(.16,now);crackGain.gain.exponentialRampToValueAtTime(.0001,now+.18);crack.connect(crackGain).connect(master);crack.start(now);crack.stop(now+.19);
+  const length=Math.floor(context.sampleRate*.16),buffer=context.createBuffer(1,length,context.sampleRate),channel=buffer.getChannelData(0);for(let i=0;i<length;i++)channel[i]=(Math.random()*2-1)*(1-i/length);const noise=context.createBufferSource(),filter=context.createBiquadFilter(),noiseGain=context.createGain();noise.buffer=buffer;filter.type='highpass';filter.frequency.value=520;noiseGain.gain.setValueAtTime(.26,now);noiseGain.gain.exponentialRampToValueAtTime(.0001,now+.16);noise.connect(filter).connect(noiseGain).connect(master);noise.start(now);noise.stop(now+.17);
+ }
  let sparks:{points:T.Points;start:number;origin:T.Vector3}|null=null;
  const selectionMaterial=new T.MeshBasicMaterial({color:'#f2c568',transparent:true,opacity:.92,depthWrite:false});const recentMaterial=new T.MeshBasicMaterial({color:'#e4c77a',transparent:true,opacity:.36,depthWrite:false});const checkMaterial=new T.MeshBasicMaterial({color:'#d55b43',transparent:true,opacity:.82,depthWrite:false});const dotMaterial=new T.MeshBasicMaterial({color:'#49341b',depthWrite:false});const dotEdgeMaterial=new T.MeshBasicMaterial({color:'#fff0c4',depthWrite:false});materials.push(selectionMaterial,recentMaterial,checkMaterial,dotMaterial,dotEdgeMaterial);
  const ringGeometry=new T.RingGeometry(.38,.46,48),dotGeometry=new T.RingGeometry(.095,.19,32),dotEdgeGeometry=new T.RingGeometry(.19,.225,32),captureEdgeGeometry=new T.RingGeometry(.46,.49,48),tileGeometry=new T.PlaneGeometry(.94,.94);geometries.push(ringGeometry,dotGeometry,dotEdgeGeometry,captureEdgeGeometry,tileGeometry);
@@ -59,7 +66,7 @@ export function createChessScene(host:HTMLDivElement,onSquare:(s:Square)=>void,o
     figures.add(figure);newPieces.set(p.square,figure);
    }
    for(const old of pieces.values())figures.remove(old);pieces=newPieces;
-   if(isMove&&next.last!.captured)emitSparks(next.last!.to);
+   if(isMove&&next.last!.captured){emitSparks(next.last!.to);playCaptureSound();onCapture(next.last!.to);}
    fen=nextFen;lastKey=key;
   }
   // The flip control changes only the camera. Both armies continue facing each other.
@@ -70,11 +77,12 @@ export function createChessScene(host:HTMLDivElement,onSquare:(s:Square)=>void,o
   dirty=true;
  }
  const raycaster=new T.Raycaster(),pointer=new T.Vector2();let down:{x:number;y:number;id:number}|null=null,multitouch=false;const activePointers=new Set<number>();
- const onDown=(e:PointerEvent)=>{activePointers.add(e.pointerId);if(activePointers.size>1)multitouch=true;down={x:e.clientX,y:e.clientY,id:e.pointerId};};
+ const onDown=(e:PointerEvent)=>{unlockAudio();activePointers.add(e.pointerId);if(activePointers.size>1)multitouch=true;down={x:e.clientX,y:e.clientY,id:e.pointerId};};
  const onUp=(e:PointerEvent)=>{activePointers.delete(e.pointerId);const moved=!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>6;const multi=multitouch;if(activePointers.size===0)multitouch=false;down=null;if(moved||multi||state?.disabled)return;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects([...figures.children,...tiles],true);for(const hit of hits){let o:T.Object3D|null=hit.object;while(o&&!o.userData.square)o=o.parent;if(o?.userData.square){onSquare(o.userData.square as Square);break;}}};
  const onCancel=(e:PointerEvent)=>{activePointers.delete(e.pointerId);down=null;if(!activePointers.size)multitouch=false;};
  const lost=(e:Event)=>{e.preventDefault();onFailure();};
  renderer.domElement.addEventListener('pointerdown',onDown);renderer.domElement.addEventListener('pointerup',onUp);renderer.domElement.addEventListener('pointercancel',onCancel);renderer.domElement.addEventListener('webglcontextlost',lost);
+ window.addEventListener('pointerdown',unlockAudio,{passive:true});window.addEventListener('keydown',unlockAudio);
  const projected=new T.Vector3();
  function render(){if(disposed)return;frame=requestAnimationFrame(render);if(document.hidden)return;controls.update();const now=performance.now();
   for(let i=animations.length-1;i>=0;i--){const a=animations[i],t=Math.min(1,(now-a.start)/280),ease=1-(1-t)**3;a.piece.position.lerpVectors(a.from,a.to,ease);a.piece.position.y+=Math.sin(t*Math.PI)*.12;if(t===1)animations.splice(i,1);dirty=true;}
@@ -87,7 +95,7 @@ export function createChessScene(host:HTMLDivElement,onSquare:(s:Square)=>void,o
   dirty=false;}
  }
  render();
- return{update,resetView,zoom:(delta:number)=>{camera.zoom=T.MathUtils.clamp(camera.zoom+delta,.8,2.3);camera.updateProjectionMatrix();dirty=true;},dispose:()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();renderer.domElement.removeEventListener('pointerdown',onDown);renderer.domElement.removeEventListener('pointerup',onUp);renderer.domElement.removeEventListener('pointercancel',onCancel);renderer.domElement.removeEventListener('webglcontextlost',lost);if(sparks){sparks.points.geometry.dispose();(sparks.points.material as T.Material).dispose();}room.dispose();library.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());renderer.dispose();renderer.domElement.remove();}};
+ return{update,resetView,unlockAudio,zoom:(delta:number)=>{camera.zoom=T.MathUtils.clamp(camera.zoom+delta,.8,2.3);camera.updateProjectionMatrix();dirty=true;},dispose:()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();renderer.domElement.removeEventListener('pointerdown',onDown);renderer.domElement.removeEventListener('pointerup',onUp);renderer.domElement.removeEventListener('pointercancel',onCancel);renderer.domElement.removeEventListener('webglcontextlost',lost);window.removeEventListener('pointerdown',unlockAudio);window.removeEventListener('keydown',unlockAudio);if(sparks){sparks.points.geometry.dispose();(sparks.points.material as T.Material).dispose();}room.dispose();library.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());renderer.dispose();renderer.domElement.remove();if(audioContext)void audioContext.close();}};
 }
 
 
