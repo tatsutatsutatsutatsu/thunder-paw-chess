@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import * as T from 'three';
 import {createFigurineLibrary,opponentFacing} from '../lib/chess/three/figurines.ts';
+import {createRoomBackdrop} from '../lib/chess/three/environment.ts';
 test('twelve true volumetric models with correct color/type and shared clone geometry',()=>{
  const lib=createFigurineLibrary();
  for(const color of ['w','b'])for(const type of ['k','q','r','b','n','p']){
@@ -31,5 +32,17 @@ test('armies face toward the opposite starting rank independently of camera',()=
  const white=forward.clone().applyAxisAngle(new T.Vector3(0,1,0),opponentFacing('w'));
  const black=forward.clone().applyAxisAngle(new T.Vector3(0,1,0),opponentFacing('b'));
  assert(white.z<-.99);assert(black.z>.99);assert(white.dot(black)<-.99);
+});
+
+test('room backdrop surrounds all four viewing directions',()=>{
+ const room=createRoomBackdrop();
+ assert.deepEqual(room.group.userData.wallSides,['north','south','east','west']);
+ const meshes=room.group.children.filter(child=>child.isMesh);
+ assert(meshes.some(mesh=>mesh.position.z>=9.4),'positive-z side needs scenery');
+ assert(meshes.some(mesh=>mesh.position.z<=-9.4),'negative-z side needs scenery');
+ assert(meshes.some(mesh=>mesh.position.x>=9.4),'positive-x wall is missing');
+ assert(meshes.some(mesh=>mesh.position.x<=-9.4),'negative-x wall is missing');
+ assert(meshes.length>80,'the room should include furnishing detail');
+ room.dispose();
 });
 
