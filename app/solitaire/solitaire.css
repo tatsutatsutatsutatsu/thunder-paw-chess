@@ -13,3 +13,4 @@
 .sol-mascot img{width:74px;height:74px}
 @media(max-width:780px){.sol-card-suit{right:3px;bottom:2px;font-size:13px}.sol-mascot img{width:52px;height:52px}}
 .sol-rescue{display:flex;align-items:center;gap:8px;width:100%;margin:0 0 14px;padding:11px 13px;border:1px solid #f4d889;border-radius:7px;background:#f7dd9140;color:#fff5d7;text-align:left;font-size:13px}.sol-rescue:hover{background:#f7dd9160}
+.sol-card-center img{width:68%;height:68%;object-fit:contain}.sol-card.face-card .sol-card-center img{width:82%;height:80%}.sol-card.face-card .sol-card-corner{font-size:clamp(13px,1.5vw,18px)}@media(max-width:780px){.sol-card.face-card .sol-card-center img{width:91%;height:88%}.sol-card.face-card .sol-card-corner{font-size:14px}}
