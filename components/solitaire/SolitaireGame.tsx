@@ -1,7 +1,7 @@
 'use client';
 /* oxlint-disable next/no-img-element -- The existing small local cat sprite is used as character art. */
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { RotateCcw, Undo2, Zap } from 'lucide-react';
 import { autoFoundation, draw, isWon, move, newGame, suits, type Card, type Destination, type Game, type Pile, type Suit } from '@/lib/solitaire/engine';
@@ -10,6 +10,9 @@ const suitMark: Record<Suit, string> = { spades: '♠', hearts: '♥', diamonds:
 const suitName: Record<Suit, string> = { spades: 'スペード', hearts: 'ハート', diamonds: 'ダイヤ', clubs: 'クラブ' };
 const rankMark = (rank: number) => ({ 1: 'A', 11: 'J', 12: 'Q', 13: 'K' })[rank as 1 | 11 | 12 | 13] || String(rank);
 const sourceId = (source: Pile) => source.kind === 'waste' ? 'waste' : `${source.kind}-${source.index}-${source.kind === 'tableau' ? source.cardIndex : ''}`;
+const subscribeReady = () => () => {};
+const clientReady = () => true;
+const serverReady = () => false;
 
 function PlayingCard({ card, onClick, onDoubleClick, onDragStart, selected, style }: { card: Card; onClick?: () => void; onDoubleClick?: () => void; onDragStart?: (event: React.DragEvent) => void; selected?: boolean; style?: React.CSSProperties }) {
   const label = card.faceUp ? `${suitName[card.suit]}の${rankMark(card.rank)}` : '裏向きのカード';
@@ -19,6 +22,7 @@ function PlayingCard({ card, onClick, onDoubleClick, onDragStart, selected, styl
 }
 
 export default function SolitaireGame() {
+  const ready = useSyncExternalStore(subscribeReady, clientReady, serverReady);
   const [game, setGame] = useState<Game>(() => newGame());
   const [history, setHistory] = useState<Game[]>([]);
   const [selected, setSelected] = useState<Pile | null>(null);
@@ -74,6 +78,7 @@ export default function SolitaireGame() {
     setSelected(null);
     setMessage('新しいゲームを始めました。');
   }
+  if (!ready) return <main className="sol-app"><div className="sol-loading"><Zap size={24} fill="currentColor" />カードを配っています…</div></main>;
   return <main className="sol-app">
     <header className="sol-header"><Link href="/" className="sol-brand"><span><Zap size={20} fill="currentColor" /></span>THUNDER PAW</Link><nav aria-label="ゲームを選ぶ"><Link href="/">チェス</Link><span aria-current="page">ソリティア</span></nav></header>
     <div className="sol-intro"><div><p className="sol-eyebrow">THUNDER PAW MINI GAMES · 02</p><h1>電気猫のソリティア</h1><p>ひらめく一手で、4つの組札を完成させよう。</p></div><div className="sol-mascot"><img src="/pieces/king-w.png" alt="電気猫のチェスフィギュア" /><Zap size={28} fill="currentColor" aria-hidden="true" /></div></div>
