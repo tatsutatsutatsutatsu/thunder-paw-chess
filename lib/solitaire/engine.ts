@@ -79,3 +79,70 @@ export function autoFoundation(game: Game, source: Pile): Game | null {
 }
 
 export function isWon(game: Game) { return game.foundations.every((pile) => pile.length === 13); }
+
+export type Hint =
+  | { kind: 'move'; source: Pile; target: Destination; card: Card }
+  | { kind: 'seek'; card: Card }
+  | { kind: 'stuck' }
+  | { kind: 'won' };
+
+function destinations(game: Game): Destination[] {
+  return [
+    ...game.foundations.map((_, index) => ({ kind: 'foundation' as const, index })),
+    ...game.tableau.map((_, index) => ({ kind: 'tableau' as const, index })),
+  ];
+}
+
+export function findHint(game: Game): Hint {
+  if (isWon(game)) return { kind: 'won' };
+  const targets = destinations(game);
+  const candidate = (source: Pile, card: Card, allowed = targets): Hint | null => {
+    const target = allowed.find((destination) => {
+      if (source.kind === 'tableau' && source.cardIndex === 0 && destination.kind === 'tableau' && game.tableau[destination.index].length === 0) return false;
+      return move(game, source, destination);
+    });
+    return target ? { kind: 'move', source, target, card } : null;
+  };
+
+  // Exposing a face-down card gives the player new information, so favor it.
+  for (let index = 0; index < game.tableau.length; index++) {
+    const pile = game.tableau[index];
+    const firstFaceUp = pile.findIndex((card) => card.faceUp);
+    if (firstFaceUp > 0) {
+      const source = { kind: 'tableau' as const, index, cardIndex: firstFaceUp };
+      const hint = candidate(source, pile[firstFaceUp]);
+      if (hint) return hint;
+    }
+  }
+
+  for (let index = 0; index < game.tableau.length; index++) {
+    const pile = game.tableau[index];
+    for (let cardIndex = pile.length - 1; cardIndex >= 0; cardIndex--) {
+      if (!pile[cardIndex].faceUp) break;
+      const hint = candidate({ kind: 'tableau', index, cardIndex }, pile[cardIndex]);
+      if (hint) return hint;
+    }
+  }
+
+  const wasteTop = game.waste.at(-1);
+  if (wasteTop) {
+    const hint = candidate({ kind: 'waste' }, wasteTop);
+    if (hint) return hint;
+  }
+
+  // With one-card draw and unlimited passes, every remaining deck card can be
+  // brought to the waste top. Check them before declaring the layout stuck.
+  for (const card of [...game.stock, ...game.waste.slice(0, -1)]) {
+    const simulated = { ...game, waste: [card] };
+    if (targets.some((target) => move(simulated, { kind: 'waste' }, target))) return { kind: 'seek', card };
+  }
+
+  // Moving a foundation card back is occasionally necessary to unlock a row.
+  for (let index = 0; index < game.foundations.length; index++) {
+    const card = game.foundations[index].at(-1);
+    if (!card) continue;
+    const hint = candidate({ kind: 'foundation', index }, card, targets.filter((target) => target.kind === 'tableau'));
+    if (hint) return hint;
+  }
+  return { kind: 'stuck' };
+}
