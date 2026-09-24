@@ -50,6 +50,7 @@ export function move(game: Game, source: Pile, target: Destination): Game | null
   const card = moving[0];
   if (target.kind === 'foundation') {
     if (moving.length !== 1 || !foundations[target.index]) return null;
+    if (card.suit !== suits[target.index]) return null;
     const top = foundations[target.index].at(-1);
     if (top ? top.suit !== card.suit || card.rank !== top.rank + 1 : card.rank !== 1) return null;
   } else {
