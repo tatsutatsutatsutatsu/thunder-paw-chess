@@ -3,8 +3,8 @@
 
 import { useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
-import { Lightbulb, RotateCcw, Undo2, Zap } from 'lucide-react';
-import { autoFoundation, draw, findHint, isWon, move, newGame, suits, type Card, type Destination, type Game, type Pile, type Suit } from '@/lib/solitaire/engine';
+import { Lightbulb, RotateCcw, Sparkles, Undo2, Zap } from 'lucide-react';
+import { autoFoundation, draw, findHint, isWon, move, newGame, rescue, suits, type Card, type Destination, type Game, type Pile, type Suit } from '@/lib/solitaire/engine';
 
 const suitMark: Record<Suit, string> = { spades: '♠', hearts: '♥', diamonds: '♦', clubs: '♣' };
 const suitName: Record<Suit, string> = { spades: 'スペード', hearts: 'ハート', diamonds: 'ダイヤ', clubs: 'クラブ' };
@@ -29,6 +29,7 @@ export default function SolitaireGame() {
   const [message, setMessage] = useState('カードを選んで移動先をタップ。ドラッグでも動かせます。');
   const dragging = useRef<Pile | null>(null);
   const won = isWon(game);
+  const stuck = !won && findHint(game).kind === 'stuck';
   const complete = game.foundations.reduce((sum, pile) => sum + pile.length, 0);
 
   function commit(next: Game | null, success: string) {
@@ -97,10 +98,11 @@ export default function SolitaireGame() {
     <div className="sol-intro"><div><p className="sol-eyebrow">THUNDER PAW MINI GAMES · 02</p><h1>電気猫のソリティア</h1><p>ひらめく一手で、4つの組札を完成させよう。</p></div><div className="sol-mascot"><img src="/pieces/king-w.png" alt="電気猫のチェスフィギュア" /><Zap size={28} fill="currentColor" aria-hidden="true" /></div></div>
     <section className="sol-game" aria-label="ソリティアの盤面"><div className="sol-toolbar"><div><strong>{complete} <small>/ 52 枚</small></strong><span>組札に集めたカード</span></div><div className="sol-toolbar-actions"><button onClick={showHint}><Lightbulb size={17} />ヒント</button><button onClick={undo} disabled={!history.length}><Undo2 size={17} />1手戻す</button><button onClick={restart}><RotateCcw size={17} />新しいゲーム</button></div></div>
       <output className="sol-message" aria-live="polite">{message}</output>
+      {stuck && <button className="sol-rescue" onClick={() => commit(rescue(game), '電気猫が場札を1枚、山札の底へ戻しました。')}><Sparkles size={17} />手詰まりです · 電気猫のお助けを使う</button>}
       <div className="sol-board-scroll"><div className="sol-board"><div className="sol-top-row"><div className="sol-top-left"><div className="sol-pile"><span className="sol-pile-label">山札</span><button className={`sol-slot sol-stock ${game.stock.length ? 'has-cards' : ''}`} onClick={() => commit(draw(game), game.stock.length ? '山札をめくりました。' : '山札を戻しました。')} aria-label={game.stock.length ? `山札をめくる。残り${game.stock.length}枚` : game.waste.length ? '捨て札を山札に戻す' : '山札は空です'} disabled={!game.stock.length && !game.waste.length}>{game.stock.length ? <Zap size={29} fill="currentColor" /> : <RotateCcw size={24} />}</button></div><div className="sol-pile"><span className="sol-pile-label">めくった札</span><div className="sol-slot">{game.waste.length ? <PlayingCard card={game.waste.at(-1)!} selected={selected?.kind === 'waste'} onClick={() => choose({ kind: 'waste' })} onDoubleClick={() => auto({ kind: 'waste' })} onDragStart={(event) => drag(event, { kind: 'waste' })} /> : <span className="sol-empty-symbol">✦</span>}</div></div></div><div className="sol-foundations">{suits.map((suit, index) => <div className="sol-pile" key={suit}><span className="sol-pile-label">組札 {suitMark[suit]}</span><div className="sol-slot" onDragOver={(event) => event.preventDefault()} onDrop={(event) => drop(event, { kind: 'foundation', index })}>{game.foundations[index].length ? <PlayingCard card={game.foundations[index].at(-1)!} selected={selected?.kind === 'foundation' && selected.index === index} onClick={() => selected ? targetClick({ kind: 'foundation', index }) : choose({ kind: 'foundation', index })} onDragStart={(event) => drag(event, { kind: 'foundation', index })} /> : <button className="sol-empty-foundation" onClick={() => targetClick({ kind: 'foundation', index })} aria-label={`${suitName[suit]}の組札に置く`}>{suitMark[suit]}</button>}</div></div>)}</div></div>
       <div className="sol-tableau">{game.tableau.map((pile, index) => <div className="sol-pile" key={index}><span className="sol-pile-label">場札 {index + 1}</span><div className="sol-tableau-slot" style={{ height: `max(var(--sol-card-h), calc(${pile.length - 1} * var(--sol-overlap) + var(--sol-card-h)))` }} onDragOver={(event) => event.preventDefault()} onDrop={(event) => drop(event, { kind: 'tableau', index })}>{pile.length ? pile.map((card, cardIndex) => <PlayingCard key={`${card.suit}-${card.rank}`} card={card} style={{ top: `calc(${cardIndex} * var(--sol-overlap))` }} selected={selected?.kind === 'tableau' && selected.index === index && selected.cardIndex === cardIndex} onClick={() => card.faceUp && choose({ kind: 'tableau', index, cardIndex })} onDoubleClick={() => card.faceUp && auto({ kind: 'tableau', index, cardIndex })} onDragStart={(event) => drag(event, { kind: 'tableau', index, cardIndex })} />) : <button className="sol-empty-tableau" onClick={() => targetClick({ kind: 'tableau', index })} aria-label={`空の場札${index + 1}に置く`}>K</button>}</div></div>)}</div></div></div>
       {won && <div className="sol-win"><Zap size={30} fill="currentColor" /><strong>おめでとう！</strong><span>電気猫とソリティアをクリアしました。</span><button onClick={restart}>もう一度遊ぶ</button></div>}
-    </section><aside className="sol-rules"><h2>遊び方</h2><p>赤と黒を交互に、数字が1つ小さくなる順で場札を重ねます。空いた列にはKから置けます。4つの組札はAから同じマークで順番に重ね、すべて集めるとクリアです。</p><p>カードを選んで行き先をタップ。ダブルクリックで組札へ自動で移動します。山札は1枚ずつめくれ、最後までめくったら戻して繰り返し使えます。迷ったら「ヒント」で次の手を確認できます。</p></aside>
+    </section><aside className="sol-rules"><h2>遊び方</h2><p>赤と黒を交互に、数字が1つ小さくなる順で場札を重ねます。空いた列にはKから置けます。4つの組札はAから同じマークで順番に重ね、すべて集めるとクリアです。</p><p>カードを選んで行き先をタップ。ダブルクリックで組札へ自動で移動します。山札は1枚ずつめくれ、最後までめくったら戻して繰り返し使えます。迷ったら「ヒント」。本当に手詰まりなら、任意のお助けで場札を1枚山札へ戻せます。</p></aside>
     <footer className="sol-footer">THUNDER PAW · 小さな猫たちの、大きなひらめき。</footer>
   </main>;
 }

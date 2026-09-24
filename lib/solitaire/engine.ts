@@ -146,3 +146,17 @@ export function findHint(game: Game): Hint {
   }
   return { kind: 'stuck' };
 }
+
+// Optional help for deals that have reached a genuine dead end. Return one
+// blocking tableau card to the bottom of the stock and uncover its neighbor.
+export function rescue(game: Game): Game | null {
+  if (findHint(game).kind !== 'stuck') return null;
+  const index = game.tableau.findIndex((pile) => pile.length > 1 && !pile[pile.length - 2].faceUp);
+  const chosen = index >= 0 ? index : game.tableau.findIndex((pile) => pile.length > 0);
+  if (chosen < 0) return null;
+  const tableau = game.tableau.map((pile) => pile.slice());
+  const card = tableau[chosen].pop()!;
+  const underneath = tableau[chosen].at(-1);
+  if (underneath && !underneath.faceUp) tableau[chosen][tableau[chosen].length - 1] = { ...underneath, faceUp: true };
+  return { ...game, stock: [{ ...card, faceUp: false }, ...game.stock], tableau, moves: game.moves + 1 };
+}

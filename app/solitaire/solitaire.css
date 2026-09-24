@@ -6,3 +6,4 @@
 @media(prefers-reduced-motion:reduce){.sol-card{transition:none}}
 @media(max-width:540px){.sol-toolbar{flex-wrap:wrap}.sol-toolbar-actions{width:100%;justify-content:flex-end}.sol-toolbar-actions button{flex:1;justify-content:center}}
 @media(max-width:780px){.sol-board{min-width:0;--sol-card-w:clamp(36px,calc((100vw - 44px)/7 - 4px),72px)}.sol-card-center{font-size:clamp(23px,5vw,32px)}.sol-card-corner{top:4px;left:4px;font-size:15px}.sol-card-corner small{font-size:12px}.sol-pile-label{font-size:10px}}
+.sol-rescue{display:flex;align-items:center;gap:8px;width:100%;margin:0 0 14px;padding:11px 13px;border:1px solid #f4d889;border-radius:7px;background:#f7dd9140;color:#fff5d7;text-align:left;font-size:13px}.sol-rescue:hover{background:#f7dd9160}
