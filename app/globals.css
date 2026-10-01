@@ -24,6 +24,31 @@
 }
 
 .online-setup{display:flex;flex-direction:column;gap:11px;margin-top:15px}.online-divider{display:flex;align-items:center;gap:10px;color:#9a8d75;font-size:12px}.online-divider::before,.online-divider::after{content:'';height:1px;flex:1;background:var(--border)}.room-code-label{font-size:13px;color:#746b5b}.room-code-input{justify-content:center}.room-code-input [data-slot=input-otp-slot]{width:38px;height:44px;border-color:#c9b994;background:#fffaf0;font:600 20px Georgia,serif;color:#423824}.secondary-button{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:46px;padding:10px 14px;border:1px solid #8f7a50;border-radius:5px;background:#f7f1e5;color:#4a402d;font-size:14px}.secondary-button:hover:not(:disabled){background:#ebe1cf}.secondary-button:disabled,.primary-button:disabled{opacity:.55}.online-error{font-size:13px;line-height:1.6;color:#a74732;text-align:center}.room-banner{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:12px;margin-bottom:6px;padding:8px 11px;border:1px solid #bda66f;border-radius:7px;background:#f5ecd9;color:#51442d}.room-banner>div{display:flex;align-items:baseline;gap:8px}.room-banner small{font-size:11px;color:#897553}.room-banner strong{font:600 20px Georgia,serif;letter-spacing:.12em}.room-banner .quiet-button{min-height:32px;padding:5px 8px}.room-banner>span{justify-self:end;font-size:12px;color:#6f6042}.room-banner.waiting{border-color:#9d875b;box-shadow:inset 3px 0 0 #ad8c4e}.danger-button{color:#9e402f}.spin{animation:online-spin .8s linear infinite}@keyframes online-spin{to{transform:rotate(360deg)}}
+
+/* Friendly start controls: a child can find the first action without hunting below the board. */
+.setup-panel{border-radius:18px;border-color:#ddbc69;background:#fff9e8;box-shadow:0 8px 24px #835f2418}
+.setup-panel .eyebrow{color:#9d601b;font-size:13px;font-weight:700;letter-spacing:.04em}
+.setup-panel h2{font-family:system-ui,'Yu Gothic',sans-serif;font-size:24px;font-weight:800;line-height:1.35}
+.mode-options label{min-height:60px;border-radius:12px}
+.mode-options label.chosen{border:2px solid #e8ab2a;background:#fff0b7;box-shadow:0 3px 0 #d08b1b}
+.mode-options strong{font-size:16px;font-weight:750}
+.mode-options small{font-size:13px;color:#665941}
+.primary-button{min-height:52px;border-radius:12px;background:#b9542e;border-color:#a84926;font-size:16px;font-weight:800;box-shadow:0 4px 0 #86361c}
+.primary-button:hover:not(:disabled){background:#c9663c}
+.primary-button:active:not(:disabled){transform:translateY(2px);box-shadow:0 2px 0 #86361c}
+.board-info{border-radius:12px;background:#fff4cd;border-color:#dfae3b;font-size:14px}
+.board-info strong{font-weight:800}
+.board-info span{font-weight:600}
+.game-nav{display:flex;align-items:center;gap:8px}
+.game-nav a,.game-nav span{min-height:44px;display:inline-flex;align-items:center;padding:8px 14px;border-radius:24px;color:#5d4d32;text-decoration:none;font-size:14px;font-weight:700}
+.game-nav [aria-current=page]{background:#f2d477;color:#4c3217}
+.game-nav a:hover{background:#fff0ba}
+.chess-app button:focus-visible,.chess-app a:focus-visible,.chess-app label:focus-within{outline:3px solid #e5a928;outline-offset:2px}
+.rules-text .rule-first{padding:14px;border-radius:12px;background:#fff0bc;color:#43351d;font-size:16px;font-weight:700}
+.rules-text details{border-top:1px solid #d7c9aa;padding-top:12px}
+.rules-text summary{cursor:pointer;color:#664719;font-weight:700}
+.rules-text details p{margin-top:12px}
+@media(max-width:780px){.game-layout.before-start .game-panel{order:-1}.game-layout.before-start .setup-panel{padding:17px}.game-layout.before-start .collection-note{display:none}.game-layout.before-start .mode-options{margin:12px 0}.game-layout.before-start .mode-options label{min-height:56px}.board-info{flex-wrap:wrap}.board-info span{text-align:left}.site-header{height:auto;display:grid;grid-template-columns:1fr auto;gap:5px;padding:7px 0}.site-header .wordmark{grid-column:1;white-space:nowrap}.site-header .game-nav{grid-column:1/-1;grid-row:2;justify-content:center}.site-header>.quiet-button{grid-column:2;grid-row:1;min-height:44px}}
 @media(max-width:780px){.room-banner{grid-template-columns:1fr auto}.room-banner>span{grid-column:1/-1;justify-self:start}.room-code-input [data-slot=input-otp-slot]{width:37px}.mode-options{grid-template-columns:1fr}.online-setup{margin-top:12px}}
 
 .capture-cut-in{position:absolute;inset:0;z-index:6;display:grid;place-items:center;overflow:hidden;pointer-events:none;animation:capture-screen .76s ease-out both}.capture-cut-in::before{content:'';position:absolute;left:-18%;width:136%;height:27%;background:linear-gradient(90deg,#2a2e26 0%,#4a402d 42%,#caa85f 50%,#4a402d 58%,#2a2e26 100%);border-block:2px solid #ffe5a4;box-shadow:0 0 34px #ffd77899;transform:translateX(-110%) skewX(-13deg);animation:capture-band .76s cubic-bezier(.18,.75,.28,1) both}.capture-flash{position:absolute;inset:0;background:radial-gradient(circle,#fff8cdcc 0%,#efd07166 16%,transparent 54%);animation:capture-flash .76s ease-out both}.capture-strike{position:relative;z-index:1;display:flex;align-items:center;gap:16px;color:#fff4c7;text-shadow:0 2px 0 #352912,0 0 18px #ffe497;font:700 clamp(20px,5vw,42px) Georgia,serif;letter-spacing:.12em;white-space:nowrap;transform:skewX(-9deg);animation:capture-title .76s cubic-bezier(.2,.8,.25,1) both}.capture-strike svg{width:1em;height:1em;fill:#f4c95e;color:#fff0a7;filter:drop-shadow(0 0 9px #fff0a7)}

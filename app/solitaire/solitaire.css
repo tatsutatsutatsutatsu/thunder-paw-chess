@@ -14,3 +14,18 @@
 @media(max-width:780px){.sol-card-suit{right:3px;bottom:2px;font-size:13px}.sol-mascot img{width:52px;height:52px}}
 .sol-rescue{display:flex;align-items:center;gap:8px;width:100%;margin:0 0 14px;padding:11px 13px;border:1px solid #f4d889;border-radius:7px;background:#f7dd9140;color:#fff5d7;text-align:left;font-size:13px}.sol-rescue:hover{background:#f7dd9160}
 .sol-card-center img{width:68%;height:68%;object-fit:contain}.sol-card.face-card .sol-card-center img{width:82%;height:80%}.sol-card.face-card .sol-card-corner{font-size:clamp(13px,1.5vw,18px)}@media(max-width:780px){.sol-card.face-card .sol-card-center img{width:91%;height:88%}.sol-card.face-card .sol-card-corner{font-size:14px}}
+.sol-intro h1{font-family:system-ui,'Yu Gothic',sans-serif;font-weight:800}
+.sol-intro p:last-child{font-size:15px;color:#665437;font-weight:600}
+.sol-steps{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 5px}
+.sol-steps span{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:5px 10px;border-radius:20px;background:#f9e4a8;color:#46351d;font-size:13px;font-weight:700}
+.sol-steps b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#b9542e;color:#fff;font-size:13px}
+.sol-toolbar-actions button{min-height:44px;border-radius:10px;font-size:14px;font-weight:750}
+.sol-message{min-height:38px;font-size:14px;font-weight:650}
+.sol-pile-label{font-size:13px;font-weight:700}
+.sol-rules{grid-template-columns:100px 1fr 1fr}
+.sol-rules h2{font-family:system-ui,'Yu Gothic',sans-serif;font-weight:800}
+.sol-rules p{font-size:14px;line-height:1.75}
+.sol-app button:focus-visible,.sol-app a:focus-visible{outline:3px solid #ffcf55;outline-offset:2px}
+.sol-swipe-hint{display:none;margin:0 0 7px;color:#f8e4ae;font-size:12px;font-weight:700}
+@media(max-width:780px){.sol-swipe-hint{display:block}}
+@media(max-width:780px){.sol-board{min-width:360px;--sol-card-w:clamp(44px,calc((100vw - 44px)/7 - 4px),72px)}.sol-pile-label{font-size:11px}.sol-steps span{font-size:12px}.sol-toolbar-actions button{min-height:44px;padding:8px 10px;font-size:13px}.sol-rules{display:block}}
