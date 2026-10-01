@@ -3,6 +3,7 @@
 
 import { useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
+import GameNavigation from '@/components/games/GameNavigation';
 import { Lightbulb, RotateCcw, Sparkles, Undo2, Zap } from 'lucide-react';
 import { autoFoundation, draw, findHint, isWon, move, newGame, rescue, suits, type Card, type Destination, type Game, type Pile, type Suit } from '@/lib/solitaire/engine';
 
@@ -96,7 +97,7 @@ export default function SolitaireGame() {
   }
   if (!ready) return <main className="sol-app"><div className="sol-loading"><Zap size={24} fill="currentColor" />カードを配っています…</div></main>;
   return <main className="sol-app">
-    <header className="sol-header"><Link href="/" className="sol-brand"><span><Zap size={20} fill="currentColor" /></span>THUNDER PAW</Link><nav aria-label="ゲームを選ぶ"><Link href="/">チェス</Link><span aria-current="page">ソリティア</span></nav></header>
+    <header className="sol-header"><Link href="/" className="sol-brand"><span><Zap size={20} fill="currentColor" /></span>THUNDER PAW</Link><GameNavigation current="solitaire" /></header>
     <div className="sol-intro"><div><p className="sol-eyebrow">THUNDER PAW MINI GAMES · 02</p><h1>電気猫のソリティア</h1><p>カードをならべて、猫といっしょにクリアしよう！</p></div><div className="sol-mascot sol-joker-mascot"><img src="/cards/cat-joker.png" alt="ジョーカーの電気猫" /></div></div>
     <section className="sol-game" aria-label="ソリティアの盤面"><div className="sol-toolbar"><div><strong>{complete} <small>/ 52 枚</small></strong><span>あつめたカード</span></div><div className="sol-toolbar-actions"><button onClick={showHint}><Lightbulb size={17} />つぎは？</button><button onClick={undo} disabled={!history.length}><Undo2 size={17} />もどす</button><button onClick={restart}><RotateCcw size={17} />あたらしく</button></div></div>
       <div className="sol-steps" aria-label="かんたんな遊び方"><span><b>1</b>カードをえらぶ</span><span><b>2</b>赤と黒を交互にならべる</span><span><b>3</b>同じマークをAからあつめる</span></div>

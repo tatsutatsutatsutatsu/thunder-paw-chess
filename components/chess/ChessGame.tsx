@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
+import GameNavigation from '@/components/games/GameNavigation';
 import { Chess, type Square, type Move, type PieceSymbol, type Color } from 'chess.js';
 import {
   ArrowDownUp,
@@ -328,7 +329,7 @@ export default function ChessGame() {
   const onlineBanner = session && <div className={`room-banner ${waiting ? 'waiting' : ''}`}><div><small>対局番号</small><strong>{session.code}</strong></div><button className="quiet-button" onClick={() => { void navigator.clipboard.writeText(session.code); setNotice('対局番号をコピーしました。'); }}><Copy size={16} />番号をコピー</button><span>{waiting ? '相手の参加を待っています…' : session.color === 'w' ? 'あなたは白です' : 'あなたは黒です'}</span></div>;
 
   return <main className="chess-app">
-    <header className="site-header"><div className="wordmark" aria-label="THUNDER PAW CHESS"><span className="brand-icon"><Zap size={21} fill="currentColor" /></span><span>THUNDER PAW <b>CHESS</b></span></div><nav className="game-nav" aria-label="ゲームを選ぶ"><span aria-current="page">チェス</span><Link href="/solitaire">ソリティア</Link></nav><button className="quiet-button" onClick={() => setDialog('rules')}><BookOpen size={17} /><span>遊び方</span></button></header>
+      <header className="site-header"><Link href="/" className="wordmark" aria-label="THUNDER PAW ホーム"><span className="brand-icon"><Zap size={21} fill="currentColor" /></span><span>THUNDER PAW <b>CHESS</b></span></Link><GameNavigation current="chess" /><button className="quiet-button" onClick={() => setDialog('rules')}><BookOpen size={17} /><span>遊び方</span></button></header>
     <div className={`game-layout ${started ? '' : 'before-start'}`}><section className="play-area" aria-label="対局エリア"><div className="board-heading"><h1>猫たちのチェス盤</h1><span>{started ? mode === 'cpu' ? 'コンピューターと対戦' : mode === 'online' ? `オンライン · ${session?.code ?? '接続中'}` : 'ふたりで対戦' : 'スタート前'}</span></div>
       {onlineBanner}{player(flipped ? 'w' : 'b')}
       <output className={`board-info ${game.isCheck() && !result ? 'checked' : ''}`} aria-live="polite"><strong>{!started ? '白い猫からスタート' : waiting ? '相手の参加待ち' : result || `${colorName(game.turn())}の番${thinking ? ' · 考え中' : game.isCheck() ? ' · チェック！' : ''}`}</strong><span>{selectedPiece ? `${characters[selectedPiece.type].name}を選んだよ。光るマスをタップ！` : waiting ? `対局番号 ${session?.code} を相手に伝えてください` : started && !result ? myTurn ? '① 自分の猫をタップ → ② 光るマスをタップ' : '相手の着手を待っています' : 'あそびかたを選んでね'}</span></output>

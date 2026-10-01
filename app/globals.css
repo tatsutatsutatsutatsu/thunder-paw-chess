@@ -39,8 +39,8 @@
 .board-info{border-radius:12px;background:#fff4cd;border-color:#dfae3b;font-size:14px}
 .board-info strong{font-weight:800}
 .board-info span{font-weight:600}
-.game-nav{display:flex;align-items:center;gap:8px}
-.game-nav a,.game-nav span{min-height:44px;display:inline-flex;align-items:center;padding:8px 14px;border-radius:24px;color:#5d4d32;text-decoration:none;font-size:14px;font-weight:700}
+.game-nav{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px}
+.game-nav a,.game-nav span{min-height:44px;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:24px;color:#5d4d32;text-decoration:none;font-size:14px;font-weight:700}
 .game-nav [aria-current=page]{background:#f2d477;color:#4c3217}
 .game-nav a:hover{background:#fff0ba}
 .chess-app button:focus-visible,.chess-app a:focus-visible,.chess-app label:focus-within{outline:3px solid #e5a928;outline-offset:2px}
@@ -56,3 +56,5 @@
 @media(max-width:780px){.capture-strike{gap:8px;font-size:clamp(17px,6vw,27px);letter-spacing:.07em}}
 @media(prefers-reduced-motion:reduce){.capture-cut-in{display:none!important}}
 
+
+@media(min-width:781px){.site-header{height:auto;min-height:102px;flex-wrap:wrap;gap:16px;padding:12px 0}}
