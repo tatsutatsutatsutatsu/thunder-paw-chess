@@ -1,5 +1,5 @@
 'use client';
-/* oxlint-disable next/no-img-element -- Small local SVG sprites are used as card art. */
+/* oxlint-disable next/no-img-element -- Local card illustrations are displayed directly. */
 
 import { useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
@@ -17,9 +17,9 @@ const serverReady = () => false;
 function PlayingCard({ card, onClick, onDoubleClick, onDragStart, selected, style }: { card: Card; onClick?: () => void; onDoubleClick?: () => void; onDragStart?: (event: React.DragEvent) => void; selected?: boolean; style?: React.CSSProperties }) {
   const label = card.faceUp ? `${suitName[card.suit]}の${rankMark(card.rank)}` : '裏向きのカード';
   const faceCard = card.rank >= 11;
-  const art = faceCard ? `/electric-cat-${rankMark(card.rank).toLowerCase()}.svg` : '/paw-mark.svg';
+  const art = faceCard ? `/cards/cat-${card.suit}-${rankMark(card.rank).toLowerCase()}.png` : '/paw-mark.svg';
   return <button type="button" className={`sol-card ${card.faceUp ? 'face-up' : 'face-down'} ${faceCard && card.faceUp ? 'face-card' : ''} ${card.faceUp && (card.suit === 'hearts' || card.suit === 'diamonds') ? 'red' : ''} ${selected ? 'picked' : ''}`} style={style} aria-label={label} aria-pressed={card.faceUp && selected ? true : undefined} draggable={card.faceUp} onClick={onClick} onDoubleClick={onDoubleClick} onDragStart={onDragStart}>
-    {card.faceUp ? <><span className="sol-card-corner">{rankMark(card.rank)}<small>{suitMark[card.suit]}</small></span><span className={`sol-card-center ${faceCard ? 'face-card-art' : ''}`}><img src={art} alt="" /></span><span className="sol-card-suit">{suitMark[card.suit]}</span></> : <span className="sol-card-bolt"><img src="/paw-mark.svg" alt="" /></span>}
+    {card.faceUp ? faceCard ? <img className="sol-card-face-art" src={art} alt="" draggable={false} /> : <><span className="sol-card-corner">{rankMark(card.rank)}<small>{suitMark[card.suit]}</small></span><span className="sol-card-center"><img src={art} alt="" /></span><span className="sol-card-suit">{suitMark[card.suit]}</span></> : <span className="sol-card-bolt"><img src="/paw-mark.svg" alt="" /></span>}
   </button>;
 }
 
